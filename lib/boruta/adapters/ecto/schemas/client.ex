@@ -23,6 +23,7 @@ defmodule Boruta.Ecto.Client do
 
   @type t :: %__MODULE__{
           id: Ecto.UUID.t(),
+          user_id: String.t(),
           name: String.t(),
           secret: String.t(),
           confidential: boolean(),
@@ -69,6 +70,7 @@ defmodule Boruta.Ecto.Client do
   @foreign_key_type :binary_id
   @timestamps_opts type: :utc_datetime
   schema "oauth_clients" do
+    field(:user_id, :string, default: "ANONYMOUS")
     field(:name, :string)
     field(:secret, :string)
     field(:confidential, :boolean, default: false)
@@ -90,7 +92,10 @@ defmodule Boruta.Ecto.Client do
     field(:public_key, :string)
     field(:private_key, :string)
 
-    field(:token_endpoint_auth_methods, {:array, :string}, default: ["client_secret_basic", "client_secret_post"])
+    field(:token_endpoint_auth_methods, {:array, :string},
+      default: ["client_secret_basic", "client_secret_post"]
+    )
+
     field(:token_endpoint_jwt_auth_alg, :string, default: "HS256")
     field(:jwt_public_key, :string)
     field(:jwk, :map, virtual: true)
@@ -109,6 +114,7 @@ defmodule Boruta.Ecto.Client do
     |> repo().preload(:authorized_scopes)
     |> cast(attrs, [
       :id,
+      :user_id,
       :name,
       :secret,
       :confidential,
@@ -129,8 +135,10 @@ defmodule Boruta.Ecto.Client do
       :id_token_signature_alg,
       :userinfo_signed_response_alg
     ])
-    |> validate_required([:redirect_uris])
+    |> validate_required([:name, :redirect_uris])
     |> unique_constraint(:id, name: :clients_pkey)
+    |> maybe_put_anonymous_user()
+    |> unique_constraint([:user_id, :name])
     |> change_access_token_ttl()
     |> change_authorization_code_ttl()
     |> change_id_token_ttl()
@@ -158,6 +166,7 @@ defmodule Boruta.Ecto.Client do
     client
     |> repo().preload(:authorized_scopes)
     |> cast(attrs, [
+      :user_id,
       :name,
       :secret,
       :confidential,
@@ -179,11 +188,14 @@ defmodule Boruta.Ecto.Client do
       :userinfo_signed_response_alg
     ])
     |> validate_required([
+      :name,
       :authorization_code_ttl,
       :access_token_ttl,
       :refresh_token_ttl,
       :id_token_ttl
     ])
+    |> maybe_put_anonymous_user()
+    |> unique_constraint([:user_id, :name])
     |> validate_inclusion(:access_token_ttl, 1..access_token_max_ttl())
     |> validate_inclusion(:authorization_code_ttl, 1..authorization_code_max_ttl())
     |> validate_inclusion(:refresh_token_ttl, 1..refresh_token_max_ttl())
@@ -215,6 +227,16 @@ defmodule Boruta.Ecto.Client do
     client
     |> cast(attrs, [:public_key, :private_key])
     |> generate_key_pair()
+  end
+
+  defp maybe_put_anonymous_user(changeset) do
+    case get_change(changeset, :user_id, "") do
+      "" ->
+        put_change(changeset, :user_id, "ANONYMOUS")
+
+      _ ->
+        changeset
+    end
   end
 
   defp change_access_token_ttl(changeset) do
