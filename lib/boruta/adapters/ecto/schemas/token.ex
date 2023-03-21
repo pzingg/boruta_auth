@@ -16,19 +16,27 @@ defmodule Boruta.Ecto.Token do
   alias Boruta.Oauth
 
   @type t :: %__MODULE__{
+          id: Ecto.UUID.t(),
           type: String.t(),
           value: String.t(),
+          refresh_token: String.t() | nil,
+          previous_token: String.t() | nil,
+          previous_code: String.t() | nil,
           state: String.t(),
           nonce: String.t(),
           scope: String.t(),
           redirect_uri: String.t(),
           expires_at: integer(),
-          client: Client.t(),
-          sub: String.t(),
           revoked_at: DateTime.t(),
           refresh_token_revoked_at: DateTime.t(),
-          previous_token: String.t() | nil,
-          previous_code: String.t() | nil
+          code_challenge: String.t() | nil,
+          code_challenge_hash: String.t() | nil,
+          code_challenge_method: String.t() | nil,
+          access_token_ttl: integer() | nil,
+          authorization_code_ttl: integer() | nil,
+          resource_owner: map() | nil,
+          client: Ecto.Association.NotLoaded.t() | Client.t(),
+          sub: String.t(),
         }
 
   @primary_key {:id, Ecto.UUID, autogenerate: true}

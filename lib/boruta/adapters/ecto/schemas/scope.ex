@@ -7,8 +7,12 @@ defmodule Boruta.Ecto.Scope do
   import Ecto.Changeset
 
   @type t :: %__MODULE__{
+          id: Ecto.UUID.t(),
           name: String.t(),
-          public: boolean()
+          label: String.t(),
+          public: boolean(),
+          inserted_at: DateTime.t(),
+          updated_at: DateTime.t()
         }
 
   @primary_key {:id, Ecto.UUID, autogenerate: true}

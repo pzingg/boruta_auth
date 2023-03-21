@@ -22,7 +22,10 @@ defmodule Boruta.Ecto.Client do
   alias Boruta.Oauth.Client
 
   @type t :: %__MODULE__{
+          id: Ecto.UUID.t(),
+          name: String.t(),
           secret: String.t(),
+          confidential: boolean(),
           authorize_scope: boolean(),
           redirect_uris: list(String.t()),
           supported_grant_types: list(String.t()),
@@ -31,16 +34,19 @@ defmodule Boruta.Ecto.Client do
           public_revoke: boolean(),
           access_token_ttl: integer(),
           authorization_code_ttl: integer(),
-          refresh_token_ttl: integer(),
-          authorized_scopes: Ecto.Association.NotLoaded.t() | list(Scope.t()),
           id_token_ttl: integer(),
+          refresh_token_ttl: integer(),
           id_token_signature_alg: String.t(),
+          public_key: String.t(),
+          private_key: String.t(),
           token_endpoint_auth_methods: list(String.t()),
           token_endpoint_jwt_auth_alg: String.t(),
-          userinfo_signed_response_alg: String.t() | nil,
           jwt_public_key: String.t(),
-          public_key: String.t(),
-          private_key: String.t()
+          jwk: map(),
+          userinfo_signed_response_alg: String.t() | nil,
+          authorized_scopes: Ecto.Association.NotLoaded.t() | list(Scope.t()),
+          inserted_at: DateTime.t(),
+          updated_at: DateTime.t()
         }
 
   @token_endpoint_auth_methods [
